@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="5dp"
+    android:layout_marginLeft="5dp"
+    android:layout_marginRight="5dp"
+    android:layout_marginTop="5dp"
+    android:background="@drawable/list_row_selector"
+    android:padding="8dp">
+
+    <com.android.volley.toolbox.NetworkImageView
+        android:id="@+id/imgLogo"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="8dp" />
+
+    <TextView
+        android:id="@+id/txtTipo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignTop="@+id/imgLogo"
+        android:layout_toLeftOf="@+id/imgLogo"
+        android:textColor="@color/preto"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/txtCategoria"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/txtTipo"
+        android:layout_marginTop="1dip"
+        android:layout_toLeftOf="@+id/imgLogo"
+        android:textColor="@color/preto" />
+
+    <TextView
+        android:id="@+id/txtEndereco"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/txtCategoria"
+        android:layout_marginTop="1dip"
+        android:layout_toLeftOf="@+id/imgLogo"
+        android:textColor="@color/preto" />
+
+    <TextView
+        android:id="@+id/txtBairro"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/txtEndereco"
+        android:layout_marginTop="5dp"
+        android:layout_toLeftOf="@+id/imgLogo"
+        android:textColor="@color/preto" />
+
+    <TextView
+        android:id="@+id/txtCidade"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/txtBairro"
+        android:layout_marginTop="5dp"
+        android:layout_toLeftOf="@+id/imgLogo"
+        android:textColor="@color/preto" />
+
+</RelativeLayout>
