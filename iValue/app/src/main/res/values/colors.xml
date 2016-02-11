@@ -5,6 +5,7 @@
     <color name="colorAccent">#FF4081</color>
 
     <color name="cinza_claro">#ebeef0</color>
+    <color name="cinza_escuro">#666666</color>
     <color name="list_background_pressed">#2F6B9E</color>
 
     <color name="list_row_start_color">#ffffff</color>

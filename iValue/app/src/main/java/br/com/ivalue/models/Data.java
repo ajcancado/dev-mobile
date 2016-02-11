@@ -412,4 +412,15 @@ public class Data {
     public void setPermissions(List<String> permissions) {
         this.permissions = permissions;
     }
+
+    @Override
+    public String toString() {
+        return "Data{" +
+                "type='" + type + '\'' +
+                ", category='" + category + '\'' +
+                ", address='" + address + '\'' +
+                ", district='" + district + '\'' +
+                ", city='" + city + '\'' +
+                '}';
+    }
 }

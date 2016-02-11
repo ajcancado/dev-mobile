@@ -1,25 +1,36 @@
 package br.com.ivalue.ivalue;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.widget.DrawerLayout;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.arlib.floatingsearchview.FloatingSearchView;
+import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Locale;
+import java.util.List;
 
 import br.com.ivalue.adapters.DataAdapter;
+import br.com.ivalue.helper.DataHelper;
 import br.com.ivalue.models.Data;
 import br.com.ivalue.models.Properties;
 import br.com.ivalue.uteis.ConectividadeUtil;
@@ -30,8 +41,6 @@ public class MainActivity extends GenericActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final String GET_PROPERTIES = "http://177.71.250.111:3000/search/properties?authorization=3e2234b49b1da098fe0768142f40d086&city_id=1";
-
-    private DrawerLayout mDrawerLayout;
 
     private FloatingSearchView mSearchView;
 
@@ -49,26 +58,21 @@ public class MainActivity extends GenericActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mSearchView = (FloatingSearchView) findViewById(R.id.floating_search_view);
-
         filterList = new ArrayList<Data>();
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mSearchView = (FloatingSearchView) findViewById(R.id.floating_search_view);
 
         configureSearch();
 
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
 
-        map.setMyLocationEnabled(true);
-
-//        map.animateCamera(CameraUpdateFactory.zoomTo(12));
+        configureMap();
 
         listView = (ListView) findViewById(R.id.list);
 
         configureProgressDialog("Carregando...");
 
         prepareRequest();
-
     }
 
     private void configureSearch() {
@@ -80,12 +84,93 @@ public class MainActivity extends GenericActivity {
                 if (!oldQuery.equals("") && newQuery.equals("")) {
                     mSearchView.clearSuggestions();
                 } else {
+                    mSearchView.showProgress();
 
-                    String texto = newQuery.toLowerCase(Locale.getDefault());
-                    filter(texto);
+                    DataHelper.find(MainActivity.this, newQuery, filterList, new DataHelper.OnFindResultsListener() {
+
+                        @Override
+                        public void onResults(List<DataSuggestion> results) {
+
+                            mSearchView.swapSuggestions(results);
+
+                            mSearchView.hideProgress();
+                        }
+                    });
                 }
             }
         });
+
+        mSearchView.setOnSearchListener(new FloatingSearchView.OnSearchListener() {
+            @Override
+            public void onSuggestionClicked(SearchSuggestion searchSuggestion) {
+//                Log.d(TAG, "onSuggestionClicked()");
+
+                DataSuggestion dataSuggestion = (DataSuggestion) searchSuggestion;
+
+                Data data = dataSuggestion.getmData();
+
+                Toast.makeText(MainActivity.this, data.toString(), Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onSearchAction() {
+//                Log.d(TAG, "onSearchAction()");
+            }
+        });
+
+        mSearchView.setOnFocusChangeListener(new FloatingSearchView.OnFocusChangeListener() {
+            @Override
+            public void onFocus() {
+//                Log.d(TAG, "onFocus()");
+
+                mSearchView.swapSuggestions(DataHelper.getHistory(MainActivity.this, filterList, 3));
+            }
+
+            @Override
+            public void onFocusCleared() {
+//                Log.d(TAG, "onFocusCleared()");
+            }
+
+        });
+    }
+
+    public void configureMap(){
+
+        map.setMyLocationEnabled(true);
+
+        LatLng origem = obterCoordenadaOrigem();
+
+        if (origem != null) {
+
+            int zoomMapa = 15;
+
+            map.moveCamera(CameraUpdateFactory.newLatLng(origem));
+            map.animateCamera(CameraUpdateFactory.zoomTo(zoomMapa));
+        }
+
+    }
+
+    private LatLng obterCoordenadaOrigem() {
+
+        if ( Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            
+            return null ;
+        }
+        else{
+
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+            Criteria criteria = new Criteria();
+            String provider = locationManager.getBestProvider(criteria, true);
+
+            Location myLocation = locationManager.getLastKnownLocation(provider);
+
+            LatLng origem = new LatLng(myLocation.getLatitude(),myLocation.getLongitude());
+
+            return origem;
+        }
     }
 
     public void prepareRequest() {
@@ -118,7 +203,7 @@ public class MainActivity extends GenericActivity {
 
                 filterList.addAll(properties.getData());
 
-                adapter = new DataAdapter(getApplicationContext(), properties.getData());
+                adapter = new DataAdapter(MainActivity.this, properties.getData());
 
                 listView.setAdapter(adapter);
 
@@ -136,22 +221,5 @@ public class MainActivity extends GenericActivity {
         });
 
         Application.getInstance().addToRequestQueue(jsonObjReq);
-    }
-
-    private void filter(String charText) {
-        charText = charText.toLowerCase(Locale.getDefault());
-
-        properties.getData().clear();
-
-        if (charText.length() == 0) {
-            properties.getData().addAll(filterList);
-        } else {
-            for (Data data : filterList) {
-                if (data.getAddress().toLowerCase(Locale.getDefault()).contains(charText) || data.getDistrict().toLowerCase(Locale.getDefault()).contains(charText)) {
-                    properties.getData().add(data);
-                }
-            }
-        }
-        adapter.notifyDataSetChanged();
     }
 }
